@@ -165,3 +165,65 @@ for (i in 1:length(mc_beta_iv_list)) {
   abline(v = 2, col = "red")
 }
 
+
+
+################################################################
+# Question 3 – IV Application with 2SLS
+################################################################
+
+# check out https://rdrr.io/cran/wooldridge/man/card.html for the description of the variables
+
+card <- read.csv("data/PS2_card.csv")
+str(card)
+summary(card)
+
+# 1. Estimate a log(wage) equation by OLS with educ, exper, black, southsmsa, reg661 − reg668 and smsa66 as regressors.
+
+model <- lm(lwage ~ educ + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+summary(model)
+
+# 2. What kind of bias do you expect for the estimate of the effect of educ on log(wage)?
+# Answer: Don't take inherent ability into account (here measured by IQ)
+# That's why beta_educ is most likely upwards biased
+# check with the data
+model2 <- lm(lwage ~ educ + IQ + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+coefficients(model)["educ"]
+coefficients(model2)["educ"]
+
+# 3. Estimate the first stage for educ containing all explanatory variables from part 2. and the dummy variable
+# nearc4. Du educ and nearc4 have significant partial correlation?
+
+cor(card$educ, card$nearc4)
+cor.test(card$educ, card$nearc4, method = "pearson") #cor is significant => might be valid instrument (relevance criterion)
+
+first_stage <- lm(educ ~ nearc4 + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+summary(first_stage)
+
+# 4. Estimate the log(wage) equation by IV using nearc4 as an instrument for educ. Compare the estimate for the
+# effect of educ on log(wage) with the OLS estimate.
+
+educ_hat <- fitted.values(first_stage)
+
+model_iv <- lm(lwage ~ educ_hat + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+summary(model_iv)
+
+# compare coefficients of OLS and IV
+coefficients(model)["educ"]
+coefficients(model_iv)["educ_hat"]
+
+# 5. Now use nearc2 and nearc4 as instruments for educ. First estimate the first stage and comment on the
+# strength of the instruments. How do 2SLS estimates compare with the earlier ones OLS and IV?
+first_stage2 <- lm(educ ~ nearc2 + nearc4 + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+
+cor.test(card$educ, card$nearc2, method = "pearson") # cor is very weak at 0.047 => nearc2 might not be a valid instrument
+
+educ_hat2 <- fitted.values(first_stage2)
+model_iv2 <- lm(lwage ~ educ_hat2 + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
+summary(model_iv2)
+
+coefficients(model)["educ"]
+coefficients(model_iv)["educ_hat"]
+coefficients(model_iv2)["educ_hat2"]
+
+
+
