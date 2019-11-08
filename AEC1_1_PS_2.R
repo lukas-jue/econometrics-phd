@@ -87,12 +87,14 @@ par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 
@@ -130,12 +132,14 @@ par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
-  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
+  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 6), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 # 5. Repeat 3 but change the dgp of d: What does this dgp imply? d = a/N * z + v
@@ -174,12 +178,14 @@ par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
 
@@ -193,7 +199,7 @@ card <- read.csv("data/PS2_card.csv")
 str(card)
 summary(card)
 
-# 1. Estimate a log(wage) equation by OLS with educ, exper, black, southsmsa, reg661 â reg668 and smsa66 as regressors.
+# 1. Estimate a log(wage) equation by OLS with educ, exper, black, southsmsa, reg661 – reg668 and smsa66 as regressors.
 
 model <- lm(lwage ~ educ + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
 summary(model)
