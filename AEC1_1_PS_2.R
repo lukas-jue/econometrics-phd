@@ -57,9 +57,23 @@ simulate_iv <- function(n){
   pi_hat <- as.numeric(coefficients(first_iv)["z"])
   reduced_form <- lm(y ~ d_hat)
   phi_hat_1 <- as.numeric(coefficients(reduced_form)["d_hat"])
-  
+
   return(phi_hat_1)
 }
+
+simulate_ols <- function(n){
+  v <- rnorm(n)
+  e <- rnorm(n)
+  z <- rnorm(n)
+  d <- 0.25 * z + v
+  u <- 0.5 * v + e
+  y <- 2 * d + u
+  ols_y_d <- lm(y ~ 0 + d)
+  beta_hat <- coefficients(ols_y_d)["d"]
+  
+  return(beta_hat)
+}
+
 
 # single Monte Carlo simulation
 n <- 1000 #MC runs
@@ -67,11 +81,23 @@ mc_beta_iv <- vector(length = n)
 for (i in 1:n) {
   mc_beta_iv[i] <- simulate_iv(200)
 }
+
+mc_beta_ols <- vector(length = n)
+for (i in 1:n) {
+  mc_beta_ols[i] <- simulate_ols(200)
+}
+
 hist(mc_beta_iv, xlim = c(-2, 4), breaks = 100)
-plot(density(mc_beta_iv), xlim = c(0, 4))
+par(mfcol = c(2, 1))
+plot(density(mc_beta_ols), xlim = c(0, 4), main = "beta_ols (biased)")
+abline(v = 2, col = "red")                                                      # true parameter
+abline(v = mean(mc_beta_ols), col = "blue", lty = "dashed")                     # beta_ols estimate (mean)
+plot(density(mc_beta_iv), xlim = c(0, 4), main = "beta_iv (unbiased)")
+abline(v = 2, col = "red")
+abline(v = mean(mc_beta_iv), col = "blue", lty = "dashed")
 
 # multiple MC simulations to compare distributions of beta_iv's
-n_grid <- c(2, 5, 10, 50, 100, 500, 1000)
+n_grid <- c(2, 5, 10, 100, 500, 1000)
 
 mc_beta_iv_list <- list()
 for (i in 1:length(n_grid)) {
@@ -80,6 +106,15 @@ for (i in 1:length(n_grid)) {
     vector[[k]] <- simulate_iv(n_grid[i])
   }
   mc_beta_iv_list[[i]] <- vector
+}
+
+mc_beta_ols_list <- list()
+for (i in 1:length(n_grid)) {
+  vector <- vector()
+  for (k in 1:n_grid[i]) {
+    vector[[k]] <- simulate_ols(n_grid[i])
+  }
+  mc_beta_ols_list[[i]] <- vector
 }
 
 dim_graphs <- ceiling(sqrt(length(mc_beta_iv_list)))
@@ -96,6 +131,21 @@ for (i in 1:length(mc_beta_iv_list)) {
   abline(v = 2, col = "red")
   abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
+
+# better visualization with biased and unbiased estimator side by side
+windows()
+par(mfrow = c(2, length(mc_beta_iv_list)))
+for (i in 1:length(mc_beta_iv_list)) {
+  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_iv \n", "n =", length(mc_beta_iv_list[[i]])))
+  abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
+}
+for (i in 1:length(mc_beta_iv_list)) {
+  plot(density(mc_beta_ols_list[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_ols\n", "n =", length(mc_beta_ols_list[[i]])))
+  abline(v = 2, col = "red")
+  abline(v = mean(mc_beta_ols_list[[i]]), col = "blue", lty = "dashed")
+}
+
 
 
 # 4. Repeat 3. but change the data generating process (dgp) of u: What does this dgp imply? u = 0.5v + 0.5z + e
