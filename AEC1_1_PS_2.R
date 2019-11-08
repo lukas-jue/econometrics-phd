@@ -226,8 +226,7 @@ coefficients(model_iv)["educ_hat"]
 coefficients(model_iv2)["educ_hat2"]
 
 # Output construction 
-
-ibrary(stargazer)
+library(stargazer)
 stargazer(model, first_stage, model_iv, first_stage2, model_iv2, type="html", out="PS_2_output.html", dep.var.labels=c("OLS","First stage", "IV - nearc4" ,"First stage", "IV - nearc4, nearc4"  ), align = TRUE)
 
 
