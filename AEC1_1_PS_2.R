@@ -38,10 +38,9 @@ reduced_form <- lm(y ~ d_hat)
 phi_hat_1 <- as.numeric(coefficients(reduced_form)["d_hat"]) # unbiased estimator for influence of d on y through usage of instrument z
 print("true beta = 2.000")
 paste("biased beta hat = ", beta_hat)
-paste("unbiased beta_hat_iv = : " ,phi_hat_1)
+paste("unbiased beta_hat_iv = ", phi_hat_1)
 
 # 3. Perform a Monte Carlo study to to study the behavior of beta_OLS and beta_IV for a sample size N = 200
-library(MonteCarlo)
 
 # first, write code above as a function
 simulate_iv <- function(n){
@@ -83,10 +82,16 @@ for (i in 1:length(n_grid)) {
   mc_beta_iv_list[[i]] <- vector
 }
 
-dim_graphs <- 3  #round(sqrt(length(mc_beta_iv_list)))
+dim_graphs <- ceiling(sqrt(length(mc_beta_iv_list)))
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
+  abline(v = 2, col = "red")
+}
+
+par(mfcol = c(dim_graphs, dim_graphs))
+for (i in 1:length(mc_beta_iv_list)) {
+  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
 }
 
@@ -120,10 +125,16 @@ for (i in 1:length(n_grid)) {
   mc_beta_iv_list[[i]] <- vector
 }
 
-dim_graphs <- 3
+dim_graphs <- ceiling(sqrt(length(mc_beta_iv_list)))
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
+  abline(v = 2, col = "red")
+}
+
+par(mfcol = c(dim_graphs, dim_graphs))
+for (i in 1:length(mc_beta_iv_list)) {
+  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
 }
 
@@ -158,13 +169,18 @@ for (i in 1:length(n_grid)) {
   mc_beta_iv_list[[i]] <- vector
 }
 
-dim_graphs <- 3
+dim_graphs <- ceiling(sqrt(length(mc_beta_iv_list)))
 par(mfcol = c(dim_graphs, dim_graphs))
 for (i in 1:length(mc_beta_iv_list)) {
   hist(mc_beta_iv_list[[i]], breaks = 50, xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
   abline(v = 2, col = "red")
 }
 
+par(mfcol = c(dim_graphs, dim_graphs))
+for (i in 1:length(mc_beta_iv_list)) {
+  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = paste("n = " , length(mc_beta_iv_list[[i]])))
+  abline(v = 2, col = "red")
+}
 
 
 ################################################################
@@ -177,7 +193,7 @@ card <- read.csv("data/PS2_card.csv")
 str(card)
 summary(card)
 
-# 1. Estimate a log(wage) equation by OLS with educ, exper, black, southsmsa, reg661 − reg668 and smsa66 as regressors.
+# 1. Estimate a log(wage) equation by OLS with educ, exper, black, southsmsa, reg661 â reg668 and smsa66 as regressors.
 
 model <- lm(lwage ~ educ + exper + black + south + smsa + reg661 + reg662 + reg663 + reg664 + reg665 + reg666 + reg667 + reg668, data = card)
 summary(model)
@@ -226,9 +242,7 @@ coefficients(model_iv)["educ_hat"]
 coefficients(model_iv2)["educ_hat2"]
 
 # Output construction 
+
 library(stargazer)
-stargazer(model, first_stage, model_iv, first_stage2, model_iv2, type="html", out="PS_2_output.html", dep.var.labels=c("OLS","First stage", "IV - nearc4" ,"First stage", "IV - nearc4, nearc4"  ), align = TRUE)
-
-
-
-
+stargazer(model, first_stage, model_iv, first_stage2, model_iv2, type = "html", out = "PS_2_output.html",
+          dep.var.labels = c("OLS","First stage", "IV - nearc4" ,"First stage", "IV - nearc2, nearc4"  ), align = TRUE)
