@@ -57,7 +57,7 @@ simulate_iv <- function(n){
   pi_hat <- as.numeric(coefficients(first_iv)["z"])
   reduced_form <- lm(y ~ d_hat)
   phi_hat_1 <- as.numeric(coefficients(reduced_form)["d_hat"])
-
+  
   return(phi_hat_1)
 }
 
@@ -73,7 +73,6 @@ simulate_ols <- function(n){
   
   return(beta_hat)
 }
-
 
 # single Monte Carlo simulation
 n <- 1000 #MC runs
@@ -133,18 +132,23 @@ for (i in 1:length(mc_beta_iv_list)) {
 }
 
 # better visualization with biased and unbiased estimator side by side
-windows()
-par(mfrow = c(2, length(mc_beta_iv_list)))
-for (i in 1:length(mc_beta_iv_list)) {
-  plot(density(mc_beta_iv_list[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_iv \n", "n =", length(mc_beta_iv_list[[i]])))
-  abline(v = 2, col = "red")
-  abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
+
+compare_density_visualization <- function(list_iv, list_ols){
+  windows()
+  par(mfrow = c(2, length(list_iv)))
+  for (i in 1:length(list_iv)) {
+    plot(density(list_iv[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_iv\n", "n =", length(list_iv[[i]])))
+    abline(v = 2, col = "red")
+    abline(v = mean(list_iv[[i]]), col = "blue", lty = "dashed")
+  }
+  for (i in 1:length(list_ols)) {
+    plot(density(list_ols[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_ols\n", "n =", length(list_ols[[i]])))
+    abline(v = 2, col = "red")
+    abline(v = mean(list_ols[[i]]), col = "blue", lty = "dashed")
+  }
 }
-for (i in 1:length(mc_beta_iv_list)) {
-  plot(density(mc_beta_ols_list[[i]]), xlim = c(0, 4), main = "", xlab = paste("beta_ols\n", "n =", length(mc_beta_ols_list[[i]])))
-  abline(v = 2, col = "red")
-  abline(v = mean(mc_beta_ols_list[[i]]), col = "blue", lty = "dashed")
-}
+
+compare_density_visualization(mc_beta_iv_list, mc_beta_ols_list)
 
 
 
@@ -192,8 +196,12 @@ for (i in 1:length(mc_beta_iv_list)) {
   abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
+compare_density_visualization(mc_beta_iv_list, mc_beta_ols_list)
+
 # 5. Repeat 3 but change the dgp of d: What does this dgp imply? d = a/N * z + v
 # What is a? Assumed constant. If a/n is large, then less variance for smaller n MC simulations of beta_iv
+# a/n controls the degree to which d is correlated with z, hence to which degree z is a valid instrument for d
+# if a is close to n (=> a/n is close to 1), cor(d, z) is very high, hence valid instrument
 
 simulate_iv_5 <- function(n){
   v <- rnorm(n)
@@ -238,6 +246,8 @@ for (i in 1:length(mc_beta_iv_list)) {
   abline(v = mean(mc_beta_iv_list[[i]]), col = "blue", lty = "dashed")
 }
 
+compare_density_visualization(mc_beta_iv_list, mc_beta_ols_list)
+
 
 ################################################################
 # Question 3 – IV Application with 2SLS
@@ -263,7 +273,7 @@ coefficients(model)["educ"]
 coefficients(model2)["educ"]
 
 # 3. Estimate the first stage for educ containing all explanatory variables from part 2. and the dummy variable
-# nearc4. Du educ and nearc4 have significant partial correlation?
+# nearc4. Do educ and nearc4 have significant partial correlation?
 
 cor(card$educ, card$nearc4)
 cor.test(card$educ, card$nearc4, method = "pearson") #cor is significant => might be valid instrument (relevance criterion)
@@ -296,6 +306,8 @@ summary(model_iv2)
 coefficients(model)["educ"]
 coefficients(model_iv)["educ_hat"]
 coefficients(model_iv2)["educ_hat2"]
+
+# Output construction 
 
 # Output construction 
 
