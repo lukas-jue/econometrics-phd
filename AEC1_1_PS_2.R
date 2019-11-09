@@ -300,5 +300,5 @@ coefficients(model_iv2)["educ_hat2"]
 # Output construction 
 
 library(stargazer)
-stargazer(model, first_stage, model_iv, first_stage2, model_iv2, type = "html", out = "PS_2_output.html",
+stargazer(model, first_stage, model_iv, first_stage2, model_iv2, type = "text", out = "PS_2_output.txt",
           dep.var.labels = c("OLS","First stage", "IV - nearc4" ,"First stage", "IV - nearc2, nearc4"  ), align = TRUE)
