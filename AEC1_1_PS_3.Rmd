@@ -1,0 +1,74 @@
+---
+title: "Advanced Econometrics 1 – PS3"
+author: "Lukas Jürgensmeier"
+date: "17 11 2019"
+output: pdf_document
+numbersections: true
+---
+
+# Fixed Effects (FE) vs. Random Effects (RE)
+
+# Pooled OLS (POLS) and RE (Vella and Verbeek 1998)
+
+see https://rdrr.io/cran/wooldridge/man/wagepan.html for variable description.
+
+## Difference between Pooled OLS and Random Effects
+
+Explain the difference between POLS and RE with respect to the underlying assumptions.
+
+## Estimate Pooled OLS and Random Effects Model on Wagepan Data
+
+Using log(wage) as dependent variable estimate a model that contains an intercept, the regressor union, the
+year dummies d81 through d87, educ, black, hisp. Consider the POLS and RE estimation. How do coefficients
+and standard errors compare?
+
+```{r results = "hide", message = FALSE, warning = FALSE}
+library(plm)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+```
+
+```{r}
+wagepan <- read.csv("data/PS3_wagepan.csv")
+```
+
+```{r}
+model_ols <- lm(lwage ~ union + d81 + d82 + d83 + d84 + d85 + d86 + d87 + educ + black + hisp,
+                data = wagepan)
+model_pols <- plm(lwage ~ union + d81 + d82 + d83 + d84 + d85 + d86 + d87 + educ + black + hisp,
+                  model = "pooling",
+                  index = c("nr", "year"),
+                  data = wagepan)
+model_re <- plm(lwage ~ union + d81 + d82 + d83 + d84 + d85 + d86 + d87 + educ + black + hisp,
+                  model = "random",
+                  data = wagepan)
+```
+
+Coefficients and standard errors are rather similar and there is no obvious pattern in their small differences
+
+## Obtain the robust standard errors for POLS in your estimation. Why do we need them in the POLS estimation?
+
+Followed this method:
+
+https://stats.stackexchange.com/questions/145650/estimating-robust-standard-errors-in-panel-data-regressions
+
+```{r}
+pols_robust_se <- coeftest(model_pols, vcov = vcovHC(model_pols, type = "HC0")) # , cluster = "group" ?
+```
+
+## What happens if you estimate the equation by FE? Compare the estimates.
+
+```{r}
+model_fe <- plm(lwage ~ union + d81 + d82 + d83 + d84 + d85 + d86 + d87 + educ + black + hisp,
+                  model = "within",
+                  data = wagepan)
+```
+
+```{r results = "asis"}
+stargazer(model_ols, model_pols, pols_robust_se, model_re, model_fe,
+          title = "Model Comparison",
+          omit.stat = c("f"),
+          column.labels = c("OLS", "Pooled OLS", "POLS (robust SE)", "Random Effects", "Fixed Effects"),
+          model.names = FALSE, header = FALSE, font.size = "small")
+```
