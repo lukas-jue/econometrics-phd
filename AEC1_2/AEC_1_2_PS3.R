@@ -90,7 +90,7 @@ summary(model_mle)
 LL_u <- model_mle@details$value
 LL_r <- model_mle_rest@details$value
 
-LR <- -2 * (LL_r - LL_u) # Shouldn't LL_u be smaller than LL_r?
+LR <- -2 * (LL_r - LL_u)
 anova(model_mle, model_mle_rest) # same result
 # critical value at alpha = 0.05: Chi(1) = 3.841
 # |LR| > 3.841 => H0 is not rejected
@@ -106,6 +106,26 @@ W <- (model_mle@coef["beta2"] - 1.3)^2 / var_beta2
 
 ## 5.3 Lagrange Multiplier Test
   # only based on restricted model
+  # Slide 71, 82:
+  # Set up benchmark model with only intercept, then take its LL0
+  # to compute Pseudo Rsquared_r = 1 - LL/LL_0
+
+LL_0 <- function(beta0, mu, sigma) {
+  e = y - beta0
+  #
+  e = suppressWarnings(dnorm(e, mu, sigma, log = TRUE))
+  #
+  -sum(e)
+}
+
+model_mle_inter <- mle2(LL_0, start = list(beta0 = 1, mu = 0, sigma = 1))
+summary(model_mle_inter)
+LL_0 <- model_mle_inter@details$value
+
+Rsquared_r = 1 - LL_r/LL_0
+LM = n * Rsquared_r
+
+# LM > critical value => null not rejected
 
 ## 5.4 F Test
   # Note: In this case (one restriction) equal to Wald test
