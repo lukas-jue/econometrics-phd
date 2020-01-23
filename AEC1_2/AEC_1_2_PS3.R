@@ -5,6 +5,7 @@ library(mvtnorm)
 library(bbmle)
 library(dplyr)
 library(mdscore)
+library(MASS)
 
 set.seed(20200118)
 
@@ -12,6 +13,7 @@ n <- 500
 means <- c(0, 0)
 cov_mat <- matrix(c(1, 0.5, 0.5, 1), nrow = 2, ncol = 2)
 multnorm <- rmvnorm(n, mean = means, sigma = cov_mat)
+# multnorm <- mvrnorm(n, mu = means, Sigma = cov_mat) #alternative dgp with MASS package
 colnames(multnorm) <- c("x", "z")
 x <- multnorm[,1]
 z <- multnorm[,2]
@@ -58,8 +60,8 @@ epsilon_hat_mle <- y - x * mle_beta_hat["beta1"] - z * mle_beta_hat["beta2"] - m
 (epsilon_hat_ols %*% epsilon_hat_ols) / n 
 (epsilon_hat_mle %*% epsilon_hat_mle) / n # mle has slightly higher variance -> due to numerical optimization based on guesses
 
-var(epsilon_ols)
-var(epsilon_mle) # here, error variances are identical: What's the difference to (e %*% e)/n?
+var(epsilon_hat_ols)
+var(epsilon_hat_mle) # here, error variances are identical: What's the difference to (e %*% e)/n?
 
 # 3. Concentrated Log-Likelihood
 
@@ -72,6 +74,12 @@ LL_conc <- function(beta0, beta1, beta2){ # wrong! Need to fix!
 optim(LL_conc)
 
 LL_conc(beta0 = 1, beta1 = 1, beta2 = 1)
+
+
+reg3 <- mle2(LL, start = list(beta0 = 1, beta1 = 1, beta2 = 2), fixed = list(mu = 0, sigma=2))
+summary(reg3)
+epsilon_hat_conc <- y - reg3@coef[1] - reg3@coef[2]*x - reg3@coef[3]*z
+sigma_hat_conc <- (t(as.vector(epsilon_hat_conc)) %*% as.vector(epsilon_hat_conc))/n
 
 
 # 4. Restrict parameter
@@ -93,7 +101,7 @@ LL_r <- model_mle_rest@details$value
 LR <- -2 * (LL_r - LL_u)
 anova(model_mle, model_mle_rest) # same result
 # critical value at alpha = 0.05: Chi(1) = 3.841
-# |LR| > 3.841 => H0 is not rejected
+# |LR| > 3.841 => H0 is rejected
 
 
 ## 5.2 Wald Test
@@ -102,7 +110,7 @@ anova(model_mle, model_mle_rest) # same result
   # Compute W according to equation 37
 var_beta2 <- model_mle@vcov["beta2", "beta2"]
 W <- (model_mle@coef["beta2"] - 1.3)^2 / var_beta2
-# W = 18.2, same critical value as above, so null is not rejected
+# W = 18.2, same critical value as above, so null is rejected
 
 ## 5.3 Lagrange Multiplier Test
   # only based on restricted model
@@ -125,7 +133,7 @@ LL_0 <- model_mle_inter@details$value
 Rsquared_r = 1 - LL_r/LL_0
 LM = n * Rsquared_r
 
-# LM > critical value => null not rejected
+# LM > critical value => null rejected
 
 ## 5.4 F Test
   # Note: In this case (one restriction) equal to Wald test
