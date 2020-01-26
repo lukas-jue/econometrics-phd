@@ -6,6 +6,8 @@ library(bbmle)
 library(margins) # replicates STATA's margins command
 library(dplyr)
 library(stargazer)
+library(ggplot2)
+library(latex2exp)
 
 set.seed(1)
 
@@ -88,8 +90,8 @@ y_hat_probit <- pnorm(xb_probit) # phi
 # y_hat_probit <- (1/sqrt(2*pi)) * exp(-(xb_probit)^2 / 2) # should be the same to pnorm, but isn't
 z_sq <- xb_probit^2
 
-plot(x1, phi)
-plot(x2, phi)
+plot(x1, y_hat_probit)
+plot(x2, y_hat_probit)
 
 y_hat_logit <- exp(xb_probit) / (1 - exp(xb_probit))^2
 plot(x1, y_hat_probit)
@@ -204,14 +206,12 @@ for (i in 1:n) {
   y2[i] <- ifelse(y_star2[i] > 0, y2[i] <- 1, y2[i] <- 0)
 }
 
-
 model_lpm2 <- lm(y2 ~ x1 + x2)
 model_probit2 <- glm(y2 ~ x1 + x2, family = binomial(link = "probit"))
 model_logit2 <- glm(y2 ~ x1 + x2, family = binomial(link = "logit"))
 
-
 summary(model_probit2)
-stargazer(model_lpm, model_lpm2, model_probit, model_probit2, model_logit, model_logit2, type = "text")
+stargazer(model_lpm, model_lpm2, model_probit, model_probit2, model_logit, model_logit2, title = "Exercise 5: Comparison of different DGPs", type = "text")
 
 # note: OLS not very sensitive to increase in error variance
 # However, Probit and Logit models decrease their coefficients by ~50%
@@ -219,5 +219,82 @@ stargazer(model_lpm, model_lpm2, model_probit, model_probit2, model_logit, model
 
 
 #########################################################
-# Exercise 6: Run DGP again with e ~ N(0,2) and compare to benchmark probit
+# Exercise 6: Binary x1
 #########################################################
+
+# assume that exercise implies this; not exactly defined how to transform x1 >= 0
+x1_new <- ifelse(x1 < 0, x1_new <- 1, x1_new <- 0)
+
+# compute y_star
+y_star3 <- b0 + b1*x1_new + b2*x2 + e
+
+# translate y_star into y
+y3 <- vector(length = n)
+for (i in 1:n) {
+  y3[i] <- ifelse(y_star3[i] > 0, y3[i] <- 1, y3[i] <- 0)
+}
+
+model_lpm3 <- lm(y3 ~ x1_new + x2)
+model_probit3 <- glm(y3 ~ x1_new + x2, family = binomial(link = "probit"))
+model_logit3 <- glm(y3 ~ x1_new + x2, family = binomial(link = "logit"))
+
+stargazer(model_lpm, model_lpm3, model_probit, model_probit3, model_logit ,model_logit3, title = "Exercise 6: Binary x1", type = "text")
+# only minor differences in coefficients in comparison with before binary transformation of x1
+
+# a) Obtain the APE of x1 using Stata's margins command.
+
+par(mfrow = c(1, 3))
+model_lpm3 %>% 
+  margins() %>% 
+  plot(main = "LPM")
+
+model_logit3 %>% 
+  margins() %>% 
+  plot(main = "Logit")
+
+model_probit3 %>% 
+  margins() %>% 
+  plot(main = "Probit")
+
+# focus only on probit from here on
+model_probit3 %>% 
+  margins() %>% 
+  summary()
+
+# b) Obtain the APE of x1 by hand, i.e. applying equation (99) on slide 155.
+z1 <- model_probit3$coefficients[1] + model_probit3$coefficients[2] * (x1_new + 1) + model_probit3$coefficients[2] * x2
+z2 <- model_probit3$coefficients[1] + model_probit3$coefficients[2] * x1_new + model_probit3$coefficients[2] * x2
+delta <- (1 / length(x1_new)) * sum(pnorm(z1) - pnorm(z2)) # different to margins(), NEED TO FIX!
+
+# (c) Plot the predicted probabilities against x2, separately for x1 = 1
+# and x1 = 0 (which should result in a similar graph to that on slide 147.
+
+xb_probit3 <- model_probit3$coefficients[1] + model_probit3$coefficients[2] * x1_new + model_probit3$coefficients[3] * x2
+y_hat_probit3 <- pnorm(xb_probit3)
+plot_df <- data.frame(cbind(y_hat_probit3, x1_new, x2))
+plot(x2, y_hat_probit3, type = "l")
+
+plot_df %>% 
+  ggplot(aes(x = x2, y = y_hat_probit3)) +
+  geom_point(aes(color = as.factor(x1_new))) +
+  guides(col = guide_legend("x2_new\n(binary)")) +
+  theme_bw()
+
+sub_x1_1 <- subset(plot_df, plot_df$x1_new == 1)
+sub_x1_0 <- subset(plot_df, plot_df$x1_new == 0)
+
+plot_df %>% 
+  ggplot(aes(y = y_hat_probit3)) +
+  geom_line(aes(x = x2), sub_x1_1) +
+  geom_line(aes(x = x2), sub_x1_0, linetype = "dashed") +
+  theme_bw() +
+  annotate(geom = 'text', x = -2.3, y = 0.5, label = TeX("$x_1 = 1", output = 'character'), parse = TRUE) +
+  annotate(geom = 'text', x = 0.2, y = 0.5, label = TeX("$x_1 = 0", output = 'character'), parse = TRUE)
+
+
+# d) At which value of x2 is the impact of x1 largest?
+# look at marginal effect (derivative)
+# Slide 150
+
+# idea: largest vertical distance between the two lines in previous graph
+# visual inspection: must be somewhere in x2 = [-2.4, -2.2]
