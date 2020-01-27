@@ -51,12 +51,12 @@ plot(x2, y)
 e_hat <- y - model_lpm$coefficients[1] - model_lpm$coefficients[2] * x1 - model_lpm$coefficients[3] * x2
 y_hat_lpm <- model_lpm$coefficients[1] + model_lpm$coefficients[2] * x1 + model_lpm$coefficients[3] * x2
 
-plot(y_hat, e_hat) # residuals vs. fitted
+plot(y_hat_lpm, e_hat) # residuals vs. fitted
 plot(x1, e_hat)
 plot(x2, e_hat)
 plot(y_hat_lpm, y)
 
-var_y <- y_hat * (1 - y_hat)
+var_y <- y_hat_lpm * (1 - y_hat_lpm)
 par(mfrow = c(2, 2))
 plot(x1, var_y)
 plot(x2, var_y)
@@ -298,3 +298,33 @@ plot_df %>%
 
 # idea: largest vertical distance between the two lines in previous graph
 # visual inspection: must be somewhere in x2 = [-2.4, -2.2]
+
+model_probit3 %>% 
+  margins(at = list(x2 = seq(-2.5, 2, 0.01))) %>% 
+  summary() -> df_dx2_approx
+  
+
+max_me <- df_dx2_approx[which.max(df_dx2_approx$AME), "x2"]
+# derivative is maximal at x2 = -1.74
+
+# check if this is approximately a global maximum.
+Rfast::nth(df_dx2_approx$AME, 2, descending = T, index.return	= T)
+# top 10 values are in the neighbourhood of first found maximum, I therefore assume that it is global
+
+df_dx2_approx %>% 
+  ggplot(aes(x2, AME)) +
+  geom_point(aes(color = factor)) +
+  geom_vline(xintercept = max_me)
+
+# plot from above with maximum as vertical line
+plot_df %>% 
+  ggplot(aes(y = y_hat_probit3)) +
+  geom_line(aes(x = x2), sub_x1_1) +
+  geom_line(aes(x = x2), sub_x1_0, linetype = "dashed") +
+  theme_bw() +
+  annotate(geom = 'text', x = -2.3, y = 0.5, label = TeX("$x_1 = 1", output = 'character'), parse = TRUE) +
+  annotate(geom = 'text', x = 0.2, y = 0.5, label = TeX("$x_1 = 0", output = 'character'), parse = TRUE) +
+  geom_vline(xintercept = max_me, linetype = "dashed")
+
+# is the maximum derivative really the thing requested here?
+# Or rather the difference between both curves?
