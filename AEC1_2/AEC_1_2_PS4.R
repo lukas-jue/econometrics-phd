@@ -56,11 +56,12 @@ plot(x1, e_hat)
 plot(x2, e_hat)
 plot(y_hat_lpm, y)
 
-var_y <- y_hat_lpm * (1 - y_hat_lpm)
+var_y <- y_hat_lpm * (1 - y_hat_lpm) # sigma_hat
 par(mfrow = c(2, 2))
 plot(x1, var_y)
 plot(x2, var_y)
 hist(var_y)
+plot(y_hat_lpm, x1) # yhat ouside 0 and 1
 
 # Graphical test for heteroskedasticity
 par(mfrow = c(2, 2))
@@ -75,6 +76,7 @@ sq_error <- e_hat^2
 model_bp <- lm(sq_error ~ x1 + x2)
 summary(model_bp)
 
+# White Test better since there is a highly non-linear relationship
 
 #########################################################
 # Exercise 2: Estimate beta using Probit
@@ -144,7 +146,6 @@ model_probit %>%
   margins() %>% 
   summary()
 
-
 par(mfrow = c(1, 2))
 model_lpm %>% 
   margins() %>% 
@@ -164,7 +165,7 @@ model_probit %>%
   summary()
 
 # e) Calculate - by hand - the APE of x1 evaluated at x2 = 0; 1; 2; 4.
-# NEED TO FIX!
+# NEED TO FIX! Check log file
 xb <- model_probit$coefficients[1] + model_probit$coefficients[2] * x1 + model_probit$coefficients[3] * x2
 model_probit$coefficients[2] * model_probit$coefficients[3] * 2
 
@@ -191,6 +192,9 @@ model_probit %>%
   margins() %>% 
   plot(main = "Probit")
 
+stargazer(model_probit, model_logit, title = "Exercise 4: Comparison Probit vs. Logit", type = "text")
+# logit constant coefficient is equal to sample mean
+
 #########################################################
 # Exercise 5: Run DGP again with e ~ N(0,2) and compare to benchmark probit
 #########################################################
@@ -216,7 +220,8 @@ stargazer(model_lpm, model_lpm2, model_probit, model_probit2, model_logit, model
 # note: OLS not very sensitive to increase in error variance
 # However, Probit and Logit models decrease their coefficients by ~50%
 # Is there a direct connection to Var(e)?
-
+# Yes! coefficients are scaled down by the sd of e
+# Partial effects remain the same
 
 #########################################################
 # Exercise 6: Binary x1
