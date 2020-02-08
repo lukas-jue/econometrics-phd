@@ -64,7 +64,7 @@ v2_hat <- model_ols$residuals
 
 # 2. Probit of y1 on x1, x2, v2_hat
 model_probit <- glm(y1 ~ x1 + y2 + v2_hat, family = binomial(link = "probit"))
-model_lpm <- lm(y1 ~ x1 + x2 + v2_hat)
+model_lpm <- lm(y1 ~ x1 + y2 + v2_hat)
 
 
 # (b) Test the H0 that y2 is exogenous.
@@ -114,23 +114,24 @@ for (i in 1:n) {
 
 # (a) Regress u1 on v2 and calculate the residuals. Is the variance of
 # these residuals as suggested on page 185?
-model_ols3 <- lm(u1 ~ v2 - 1)
+model_ols3 <- lm(u12 ~ v22 - 1)
 e1 <- residuals(model_ols3)
 mean(e1) # close to 0 as expected
-# var(e1) = var(u1) - theta1^2 * var(v2) = 1 - rho2^2
-var(u1) - coefficients(model_ols3)[1]^2 * var(v2) # holds (= var(e1))
-# last part of the equation doesn't hold; why?
-1 - rho2^2
+# var(e1) = var(u12) - theta1^2 * var(v22) = 1 - rho2^2
+var(u12) - coefficients(model_ols3)[1]^2 * var(v22) # holds (= var(e1))
+1 - rho2^2 # also holds approximately
 
 # (b) Perform the two-step approach again.
 
 # 1. OLS of y22 on x1 and x2 to obtain residuals v2_hat22
+#########
+# Problem from (at least) here on: Residuals extremely small; no idea why
 model_ols4 <- lm(y22 ~ x1 + x2)
 v2_hat22 <- model_ols4$residuals
 
 # 2. Probit of y1 on x1, x2, v2_hat22
-model_probit22 <- glm(y12 ~ x1 + y22 + v2_hat22, family = binomial(link = "probit"), maxit = 1000)
-model_lpm22 <- lm(y12 ~ x1 + x2 + v2_hat22)
+model_probit22 <- glm(y12 ~ x1 + y22 + v2_hat22, family = binomial(link = "probit"), maxit = 200)
+model_lpm22 <- lm(y12 ~ x1 + y22 + v2_hat22)
 
 
 # (c) Test the H0 that y2 is exogenous. Is the coeffcient for v2 as
